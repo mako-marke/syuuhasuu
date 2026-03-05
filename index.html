@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ソルフェジオ周波数 魂の共鳴診断</title>
+<style>
+/* ========================================
+   ROOT VARIABLES & RESET
+======================================== */
+:root {
+  --gold: #C9A84C;
+  --gold-light: #F0D080;
+  --gold-dark: #8B6914;
+  --deep-navy: #0D0D2B;
+  --navy: #1A1A40;
+  --navy-light: #252560;
+  --purple: #3D1F6B;
+  --purple-light: #6A3CA8;
+  --teal: #0D7377;
+  --text-primary: #F5EDD5;
+  --text-muted: #A899C5;
+  --card-bg: rgba(26, 26, 64, 0.85);
+  --card-border: rgba(201, 168, 76, 0.3);
+  --selected-bg: rgba(201, 168, 76, 0.15);
+  --selected-border: rgba(201, 168, 76, 0.9);
+  --font-main: 'Hiragino Mincho ProN', 'Yu Mincho', 'MS PMincho', serif;
+  --font-sub: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--deep-navy);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* 背景グラデーション */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(61,31,107,0.6) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(13,115,119,0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(13,13,43,1) 0%, transparent 80%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ========================================
+   星空
+======================================== */
+.stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.star {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  animation: twinkle var(--dur, 3s) ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes twinkle {
+  0%,100% { opacity: 0; transform: scale(1); }
+  50% { opacity: var(--op, 0.8); transform: scale(1.2); }
+}
+
+/* ========================================
+   音波リング（背景）
+======================================== */
+.sonic-ring {
+  position: fixed;
+  border-radius: 50%;
+  border: 1px solid rgba(201, 168, 76, 0.22);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: sonicPulse 5s ease-out infinite;
+  pointer-events: none;
+  z-index: 0;
+  width: 80px;
+  height: 80px;
+}
+.sonic-ring:nth-child(2) { animation-delay: 1.6s; }
+.sonic-ring:nth-child(3) { animation-delay: 3.2s; }
+
+@keyframes sonicPulse {
+  0%   { width: 80px;  height: 80px;  opacity: 0.6; }
+  100% { width: 900px; height: 900px; opacity: 0; }
+}
+
+/* ========================================
+   LAYOUT
+======================================== */
+#app {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+}
+
+/* ========================================
+   HEADER
+======================================== */
+.app-header {
+  text-align: center;
+  padding: 40px 0 20px;
+}
+
+.app-header .subtitle {
+  font-family: var(--font-sub);
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  opacity: 0.9;
+}
+
+.app-header h1 {
+  font-size: clamp(24px, 6vw, 36px);
+  font-weight: 600;
+  line-height: 1.5;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+  letter-spacing: 2px;
+}
+
+.ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+.ornament-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold-dark), transparent);
+  max-width: 120px;
+}
+.ornament-diamond {
+  width: 8px; height: 8px;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+
+/* ========================================
+   PROGRESS BAR
+======================================== */
+.progress-wrap {
+  margin: 20px 0 30px;
+}
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-sub);
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.progress-label .step-name {
+  color: var(--gold);
+  font-weight: 600;
+}
+.progress-bar {
+  height: 5px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--gold-dark), var(--gold-light));
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+/* ========================================
+   QUESTION CARD
+======================================== */
+.question-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  backdrop-filter: blur(10px);
+  animation: cardIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.question-number {
+  font-family: var(--font-sub);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+}
+
+.question-text {
+  font-size: clamp(18px, 4vw, 24px);
+  line-height: 1.7;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.question-hint {
+  font-family: var(--font-sub);
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 28px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.03);
+  border-left: 2px solid var(--gold-dark);
+  border-radius: 0 8px 8px 0;
+}
+
+/* ========================================
+   CHOICE BUTTONS（縦1列）
+======================================== */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px 20px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(201,168,76,0.2);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: left;
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  position: relative;
+  overflow: hidden;
+  min-height: 88px;
+  width: 100%;
+}
+
+.choice-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(201,168,76,0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.choice-btn:hover {
+  border-color: rgba(201,168,76,0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(201,168,76,0.3);
+}
+.choice-btn:hover::before { opacity: 1; }
+
+.choice-btn.selected {
+  border-color: var(--selected-border);
+  background: var(--selected-bg);
+  box-shadow: 0 0 20px rgba(201,168,76,0.2), 0 0 0 1px rgba(201,168,76,0.5);
+}
+.choice-btn.selected::before { opacity: 1; }
+
+.choice-emoji {
+  font-size: 40px;
+  flex-shrink: 0;
+  width: 56px;
+  text-align: center;
+  line-height: 1;
+}
+
+.choice-content {
+  flex: 1;
+}
+
+.choice-label {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.choice-desc {
+  font-family: var(--font-sub);
+  font-size: 13px;
+  color: var(--gold);
+  opacity: 0.85;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.choice-selected-mark {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 24px; height: 24px;
+  background: var(--gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-size: 13px;
+  color: var(--deep-navy);
+  font-weight: bold;
+}
+.choice-btn.selected .choice-selected-mark { opacity: 1; }
+
+/* ========================================
+   NAVIGATION
+======================================== */
+.nav-btns {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.btn-next {
+  flex: 1;
+  padding: 18px;
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+  border: none;
+  border-radius: 12px;
+  color: var(--deep-navy);
+  font-family: var(--font-sub);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.25s;
+  opacity: 0.4;
+  pointer-events: none;
+  position: relative;
+  overflow: hidden;
+}
+.btn-next.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.btn-next.active:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(201,168,76,0.4);
+}
+.btn-next::after {
+  content: ' ▶';
+  font-size: 12px;
+}
+
+.btn-back {
+  padding: 18px 22px;
+  background: transparent;
+  border: 1.5px solid rgba(201,168,76,0.3);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-sub);
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-back:hover {
+  border-color: rgba(201,168,76,0.6);
+  color: var(--text-primary);
+}
+
+/* ========================================
+   START SCREEN
+======================================== */
+.start-screen {
+  text-align: center;
+  padding: 20px 0 40px;
+  animation: fadeIn 0.8s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.start-icon {
+  font-size: 72px;
+  margin-bottom: 20px;
+  display: block;
+  animation: floatIcon 4s ease-in-out infinite;
+}
+@keyframes floatIcon {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+.start-screen h2 {
+  font-size: clamp(20px, 4.5vw, 28px);
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.start-screen .start-desc {
+  font-family: var(--font-sub);
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.9;
+  max-width: 480px;
+  margin: 0 auto 32px;
+}
+
+.start-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(201,168,76,0.08);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 99px;
+  padding: 8px 20px;
+  font-family: var(--font-sub);
+  font-size: 13px;
+  color: var(--gold);
+  margin-bottom: 32px;
+}
+
+.btn-start {
+  display: block;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+  border: none;
+  border-radius: 14px;
+  color: var(--deep-navy);
+  font-family: var(--font-sub);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s;
+  animation: glowPulse 2.5s ease-in-out infinite;
+}
+.btn-start:hover {
+  transform: translateY(-3px) scale(1.02);
+}
+@keyframes glowPulse {
+  0%,100% { box-shadow: 0 0 20px rgba(201,168,76,0.4); }
+  50%      { box-shadow: 0 0 50px rgba(201,168,76,0.7), 0 0 100px rgba(201,168,76,0.3); }
+}
+
+/* ========================================
+   LOADING SCREEN（イコライザー）
+======================================== */
+.loading-screen {
+  text-align: center;
+  padding: 80px 20px;
+  animation: fadeIn 0.5s ease both;
+}
+
+.eq-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  height: 80px;
+  margin: 0 auto 36px;
+  width: 80px;
+}
+
+.eq-bar {
+  width: 10px;
+  border-radius: 5px;
+  background: linear-gradient(to top, var(--gold-dark), var(--gold-light));
+  animation: eqBounce var(--dur, 0.8s) ease-in-out infinite alternate;
+}
+
+@keyframes eqBounce {
+  0%   { height: 12px; }
+  100% { height: 64px; }
+}
+
+.loading-text {
+  font-size: 18px;
+  color: var(--gold);
+  margin-bottom: 12px;
+  font-family: var(--font-main);
+  animation: blink 1.8s ease-in-out infinite;
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.loading-subtext {
+  font-family: var(--font-sub);
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.9;
+}
+
+/* ========================================
+   RESULT SCREEN
+======================================== */
+.result-screen {
+  animation: cardIn 0.7s cubic-bezier(0.34,1.2,0.64,1) both;
+}
+
+.result-header {
+  text-align: center;
+  padding: 32px 0 28px;
+}
+.result-header .result-greeting {
+  font-family: var(--font-sub);
+  font-size: 13px;
+  color: var(--gold);
+  letter-spacing: 3px;
+  margin-bottom: 12px;
+  opacity: 0.9;
+}
+
+.hz-display {
+  font-size: clamp(52px, 14vw, 80px);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 8px;
+  font-family: var(--font-sub);
+  letter-spacing: -1px;
+}
+
+.freq-name {
+  font-size: clamp(18px, 4vw, 24px);
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 6px;
+  letter-spacing: 2px;
+}
+
+.luck-type {
+  font-family: var(--font-sub);
+  font-size: 14px;
+  color: var(--gold);
+  letter-spacing: 2px;
+  opacity: 0.9;
+}
+
+.result-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 18px;
+  backdrop-filter: blur(10px);
+  animation: cardIn 0.5s ease both;
+}
+
+.result-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+}
+.result-section-title .icon {
+  font-size: 22px;
+}
+
+.result-message {
+  font-size: 15px;
+  line-height: 2.1;
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  white-space: pre-line;
+}
+
+.result-highlight {
+  background: rgba(201,168,76,0.1);
+  border-left: 3px solid var(--gold);
+  padding: 14px 18px;
+  border-radius: 0 12px 12px 0;
+  margin: 14px 0;
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--text-primary);
+}
+
+.catchcopy {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gold-light);
+  text-align: center;
+  padding: 16px;
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 12px;
+  background: rgba(201,168,76,0.06);
+  margin-top: 16px;
+  line-height: 1.6;
+  letter-spacing: 1px;
+}
+
+/* 運気メーター */
+.fortune-meter {
+  margin: 14px 0;
+}
+.fortune-meter-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-sub);
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 7px;
+}
+.fortune-meter-bar {
+  height: 9px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.fortune-meter-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(to right, var(--gold-dark), var(--gold-light));
+  animation: meterIn 1.5s ease-out both 0.5s;
+  transform-origin: left;
+}
+@keyframes meterIn { from { width: 0 !important; } }
+
+/* 受け取り方法 */
+.how-to-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.how-to-item:last-child { border-bottom: none; }
+.how-to-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.how-to-text {
+  font-family: var(--font-sub);
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text-primary);
+}
+.how-to-text strong {
+  color: var(--gold-light);
+  display: block;
+  margin-bottom: 3px;
+}
+
+/* CTA */
+.cta-section {
+  background: linear-gradient(135deg, rgba(61,31,107,0.6), rgba(26,26,64,0.8));
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 20px;
+  padding: 36px 24px;
+  text-align: center;
+  margin-top: 20px;
+}
+.cta-section .cta-icon {
+  font-size: 52px;
+  margin-bottom: 16px;
+  display: block;
+}
+.cta-section h3 {
+  font-size: 18px;
+  color: var(--gold-light);
+  margin-bottom: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.cta-section p {
+  font-family: var(--font-sub);
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.9;
+  margin-bottom: 24px;
+}
+.btn-cta {
+  display: block;
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light));
+  border: none;
+  border-radius: 12px;
+  color: var(--deep-navy);
+  font-family: var(--font-sub);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-decoration: none;
+  animation: glowPulse 2.5s ease-in-out infinite;
+  transition: all 0.3s;
+}
+.btn-cta:hover {
+  transform: translateY(-3px) scale(1.02);
+}
+.btn-cta-sub {
+  font-family: var(--font-sub);
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 12px;
+  opacity: 0.8;
+}
+
+/* retry */
+.btn-retry {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px;
+  background: transparent;
+  border: 1.5px solid rgba(201,168,76,0.3);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-sub);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-retry:hover {
+  border-color: rgba(201,168,76,0.6);
+  color: var(--text-primary);
+}
+
+/* ========================================
+   UTILITY
+======================================== */
+.hidden { display: none !important; }
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+@media (max-width: 480px) {
+  .choice-btn { padding: 18px 16px; min-height: 84px; }
+  .choice-emoji { font-size: 34px; width: 48px; }
+  .choice-label { font-size: 15px; }
+  .question-card { padding: 24px 18px; }
+  .result-card { padding: 22px 16px; }
+}
+@media (max-width: 375px) {
+  .choice-label { font-size: 14px; }
+  .question-text { font-size: 17px; }
+}
+
+/* スクロールバー */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--deep-navy); }
+::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- 星空 -->
+<div class="stars" id="stars"></div>
+
+<!-- 音波リング -->
+<div class="sonic-ring"></div>
+<div class="sonic-ring"></div>
+<div class="sonic-ring"></div>
+
+<div id="app">
+  <!-- ヘッダー -->
+  <header class="app-header">
+    <div class="subtitle">◆ Solfeggio Frequency ◆</div>
+    <h1>ソルフェジオ周波数<br>魂の共鳴診断</h1>
+    <div class="ornament">
+      <div class="ornament-line"></div>
+      <div class="ornament-diamond"></div>
+      <div class="ornament-line"></div>
+    </div>
+    <p style="font-family:var(--font-sub);font-size:14px;color:var(--text-muted);line-height:1.9;text-align:center;">
+      7つの質問に答えるだけで、<br>
+      今のあなたの魂が共鳴する周波数がわかります。
+    </p>
+  </header>
+
+  <!-- プログレスバー -->
+  <div class="progress-wrap hidden" id="progressWrap">
+    <div class="progress-label">
+      <span class="step-name" id="stepName">診断中</span>
+      <span id="stepCount">1 / 7</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 14%"></div>
+    </div>
+  </div>
+
+  <!-- メインコンテンツ（JS で差し替え） -->
+  <div id="mainContent"></div>
+</div>
+
+<script>
+/* ========================================
+   STARS GENERATOR
+======================================== */
+(function(){
+  const container = document.getElementById('stars');
+  for(let i = 0; i < 80; i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      --dur:${Math.random()*4+2}s;
+      --op:${Math.random()*0.6+0.2};
+      animation-delay:${Math.random()*5}s;
+    `;
+    container.appendChild(s);
+  }
+})();
+
+/* ========================================
+   FREQUENCY DATA
+======================================== */
+const FREQUENCY_DATA = {
+  '174': {
+    hzLabel: '174Hz',
+    hzNumeric: 174,
+    name: '大地の周波数',
+    luckType: '健康運・安定運',
+    effect: '心身の重さを和らげ、生活の土台を整えます。痛みや不安を静め、毎日に安心感と落ち着きをもたらします。',
+    catchcopy: '揺るぎない土台が、すべての運気を支える',
+    emoji: '🌱',
+    videoId: 'EwqYSfCmyLM',
+    message: `あなたの魂が今、「174Hz」——大地の周波数と深く共鳴しています。
+
+この周波数は、痛みや不安を和らげ、心身の土台を根っこから整える力を持っています。
+
+今のあなたには、立ち止まって深呼吸する時間が必要なのかもしれません。焦って前へ進もうとするより、まず「自分を整えること」が、すべての運気を開く鍵になります。
+
+大地に足をつけて、ゆっくりと。土台が整えば、金運も、愛運も、自然と上向いていきます。`,
+    meters: { money: 60, love: 55, health: 95, mission: 50 }
+  },
+  '432': {
+    hzLabel: '432Hz',
+    hzNumeric: 432,
+    name: '宇宙自然の周波数',
+    luckType: '調和運・癒し運',
+    effect: '自然界の振動と同調し、心に深い安らぎをもたらします。宇宙の流れに乗り、人生にやさしい奇跡を引き寄せます。',
+    catchcopy: '自然と宇宙に繋がるとき、すべてが美しく流れ始める',
+    emoji: '🌿',
+    videoId: 'r5qRy6fUSko',
+    message: `あなたの魂が今、「432Hz」——宇宙自然の周波数と深く共鳴しています。
+
+432Hzは「自然の周波数」とも呼ばれ、木々の揺れ、海の波、心臓の鼓動——すべての自然と共鳴する音です。
+
+この周波数があなたに届いたのは、今のあなたに「自然の流れに戻ること」が求められているからです。焦らず、流れに逆らわず。あなたが本来持っている穏やかな強さが、静かに目覚めようとしています。
+
+自然の中にいるとき、ふと感じるあの安心感——それがあなたの本来の姿です。`,
+    meters: { money: 65, love: 72, health: 88, mission: 70 }
+  },
+  '528': {
+    hzLabel: '528Hz',
+    hzNumeric: 528,
+    name: '奇跡の周波数',
+    luckType: '総合運・愛の運',
+    effect: 'DNAレベルで心身を癒し、愛と奇跡を引き寄せる最も有名な周波数です。すべての運気を底上げし、人生に愛と豊かさをもたらします。',
+    catchcopy: '奇跡は、あなたのすぐそこに待っている',
+    emoji: '💚',
+    videoId: 'rSROhxMEqyA',
+    message: `あなたの魂が今、「528Hz」——奇跡の周波数と深く共鳴しています。
+
+528Hzは「愛の周波数」「奇跡の周波数」と呼ばれ、DNAの修復にも関わると言われる特別な音です。
+
+今のあなたの心には、愛と繋がりを求める純粋な想いがあります。人との縁を大切に、心を開いていく先に、思いがけない奇跡が待っています。あなたの日常に奇跡が起きるのは、まだ先ではありません。今この瞬間から、すでに始まっています。`,
+    meters: { money: 82, love: 95, health: 80, mission: 78 }
+  },
+  '963': {
+    hzLabel: '963Hz',
+    hzNumeric: 963,
+    name: '神聖の周波数',
+    luckType: '全開運・使命運',
+    effect: '宇宙・神との繋がりを開き、人生本来の使命に目覚めさせます。すべての周波数を統合する、最高位の開運エネルギーです。',
+    catchcopy: '宇宙と繋がった瞬間、あなたの本当の力が解き放たれる',
+    emoji: '🌌',
+    videoId: 'LvtPEqMHCiE',
+    message: `あなたの魂が「963Hz」——神聖の周波数に共鳴しています。
+
+これはソルフェジオ周波数の中で最も高く、宇宙の源と繋がる最高位の音です。
+
+今のあなたは、「なぜ自分はここにいるのか」「自分の本当の使命は何か」という問いに導かれています。その問い自体が、目覚めの始まりです。宇宙はあなたに、本来の力を思い出させようとしています。信じてください——あなたは、思っている以上の存在です。`,
+    meters: { money: 80, love: 78, health: 78, mission: 98 }
+  },
+  '174x528': {
+    hzLabel: '174×528Hz',
+    hzNumeric: 528,
+    name: '大地×奇跡の周波数',
+    luckType: '安定運・愛の運',
+    effect: '大地の安心感と奇跡の愛エネルギーが融合した特別な周波数です。心身の土台を整えながら、愛と豊かさを同時に引き寄せます。',
+    catchcopy: '根を張るほどに、愛という名の奇跡が花開く',
+    emoji: '🌸',
+    videoId: 'mWGXAc361jw',
+    message: `あなたの魂が「174×528Hz」——大地と奇跡、ふたつの周波数の交点に共鳴しています。
+
+174Hzの「根を張る力」と528Hzの「奇跡を呼ぶ愛」。このふたつがあなたの中で重なり合っています。
+
+今のあなたには、安心できる土台と、愛に満ちた関係の両方が求められています。焦りや不安を手放し、まず自分の心を落ち着かせることで、その先に温かい縁と豊かさが自然と流れ込んできます。
+
+大地に根ざした愛は、嵐にも揺るがない——あなたにはそれが宿っています。`,
+    meters: { money: 72, love: 88, health: 90, mission: 65 }
+  },
+  '528x963': {
+    hzLabel: '528×963Hz',
+    hzNumeric: 963,
+    name: '奇跡×神聖の周波数',
+    luckType: '愛の運・使命運',
+    effect: '愛と奇跡のエネルギーに、宇宙的な使命の目覚めが重なる最高の組み合わせです。人生の深い意味に気づき、使命を愛で満たします。',
+    catchcopy: '愛することが、あなたの使命だった',
+    emoji: '✨',
+    videoId: 'Nbneb2asQeo',
+    message: `あなたの魂が「528×963Hz」——奇跡と神聖が重なる、特別な周波数に共鳴しています。
+
+528Hzの「愛と奇跡」と、963Hzの「宇宙との繋がり」。この組み合わせはとても希少で、魂の成熟を示しています。
+
+あなたは今、「ただ幸せになりたい」という段階を超え、「自分の存在が誰かの役に立ちたい」という深い願いへと移行しています。愛することが、あなたの使命です。その愛が広がるほど、宇宙はあなたにより大きな奇跡で応えてくれます。`,
+    meters: { money: 85, love: 96, health: 82, mission: 95 }
+  },
+  '528x432': {
+    hzLabel: '528×432Hz',
+    hzNumeric: 528,
+    name: '奇跡×自然の周波数',
+    luckType: '愛の運・調和運',
+    effect: '愛の奇跡と自然の調和が融合した、穏やかで力強い周波数です。無理なく豊かさが流れ込み、人間関係がやさしく整っていきます。',
+    catchcopy: '自然の流れに乗るとき、愛と豊かさはひとりでにやってくる',
+    emoji: '🌊',
+    videoId: '8TvVrg9GJQw',
+    message: `あなたの魂が「528×432Hz」——奇跡と自然が交わる周波数に深く共鳴しています。
+
+528Hzの「愛と奇跡」と432Hzの「自然の調和」が重なったこの周波数は、力まずに豊かさを引き寄せる特別な力を持っています。
+
+今のあなたには、「頑張ること」よりも「流れに乗ること」が大切なサインです。自然界と同じように、季節が巡るように——豊かさも、愛も、あなたのもとへ自然と届きます。無理をしなくていい。あなたはすでに、その流れの中にいます。`,
+    meters: { money: 78, love: 90, health: 86, mission: 72 }
+  }
+};
+
+/* ========================================
+   QUESTIONS DATA
+======================================== */
+const QUESTIONS = [
+  {
+    id: 'q1',
+    text: '最近、体や気持ちはどちらに近いですか？',
+    hint: '今の自分に正直に、直感でお選びください',
+    choices: [
+      {
+        id: 'a',
+        label: '体が重く、疲れがなかなか取れない感じがする',
+        desc: '休んでも疲れが残る、だるさがある',
+        emoji: '🌙',
+        points: { '174': 4, '174x528': 2 }
+      },
+      {
+        id: 'b',
+        label: '焦りや不安があり、どこか落ち着かない',
+        desc: '心がザワザワする、先のことが心配',
+        emoji: '💭',
+        points: { '528': 2, '528x963': 3 }
+      }
+    ]
+  },
+  {
+    id: 'q2',
+    text: '自然や宇宙との繋がりを、どちらに感じますか？',
+    hint: '普段の感覚から、自然に近い方を選んでください',
+    choices: [
+      {
+        id: 'a',
+        label: '自然の中にいると心が落ち着く、宇宙や星に惹かれる',
+        desc: '木々・海・空・星空など自然に癒しを感じる',
+        emoji: '🌿',
+        points: { '432': 4, '528x432': 2 }
+      },
+      {
+        id: 'b',
+        label: '人との縁や絆に、大きな力と癒しを感じる',
+        desc: '家族・友人・大切な人との繋がりが心の支え',
+        emoji: '🤝',
+        points: { '528': 2, '528x963': 1 }
+      }
+    ]
+  },
+  {
+    id: 'q3',
+    text: 'お金や豊かさについて、今感じることは？',
+    hint: '正直な気持ちで選んでください',
+    choices: [
+      {
+        id: 'a',
+        label: '「足りないかも」という不安や恐れを感じる',
+        desc: '金銭的な心配、将来への漠然とした不安',
+        emoji: '💰',
+        points: { '174': 2, '174x528': 3 }
+      },
+      {
+        id: 'b',
+        label: '「もっと豊かに、自由になりたい」という望みがある',
+        desc: '制限を超えて、自分らしく生きたい',
+        emoji: '🌈',
+        points: { '528x432': 4, '528': 1 }
+      }
+    ]
+  },
+  {
+    id: 'q4',
+    text: '今の自分の状況について、どちらに近いですか？',
+    hint: 'ありのままの自分の感覚で選んでください',
+    choices: [
+      {
+        id: 'a',
+        label: '何かが変わり始めている予感がする、新しい流れを感じる',
+        desc: 'ワクワクや変化の波、人生の転換点',
+        emoji: '🌊',
+        points: { '963': 2, '528x963': 4 }
+      },
+      {
+        id: 'b',
+        label: '愛に満ちた、温かく穏やかな日々を望んでいる',
+        desc: '安心・安全・愛のある日常',
+        emoji: '🕊️',
+        points: { '528': 3, '174x528': 2 }
+      }
+    ]
+  },
+  {
+    id: 'q5',
+    text: '1年後、どんな自分でいたいですか？',
+    hint: '心の奥から湧いてくる望みを教えてください',
+    choices: [
+      {
+        id: 'a',
+        label: '心も体も軽くなって、穏やかに毎日を楽しんでいたい',
+        desc: '安定・健康・穏やかな幸せ',
+        emoji: '🌿',
+        points: { '174': 3, '432': 3 }
+      },
+      {
+        id: 'b',
+        label: '自分らしく輝いて、使命のある生き方をしていたい',
+        desc: '才能の開花・天職・自己実現',
+        emoji: '⭐',
+        points: { '963': 3, '528x963': 2 }
+      }
+    ]
+  },
+  {
+    id: 'q6',
+    text: '「なんとなくそう感じる」直感を大切にしますか？',
+    hint: 'どちらが今の自分に近いか、直感で選んでください',
+    choices: [
+      {
+        id: 'a',
+        label: 'よく直感に従って動く、不思議な体験もある',
+        desc: 'スピリチュアルな感覚、予知夢、シンクロニシティ',
+        emoji: '🌟',
+        points: { '963': 4, '528x963': 2 }
+      },
+      {
+        id: 'b',
+        label: 'どちらかというと現実的に考えてから動く',
+        desc: '論理的、地に足がついた判断',
+        emoji: '⚖️',
+        points: { '432': 4, '528x432': 2 }
+      }
+    ]
+  },
+  {
+    id: 'q7',
+    text: '今のあなたに最も近いのは？',
+    hint: '今この瞬間の魂の声を聞いてください',
+    choices: [
+      {
+        id: 'a',
+        label: '愛情・縁・つながりを育てていきたい',
+        desc: '愛・絆・関係の豊かさ',
+        emoji: '💗',
+        points: { '528': 3, '174x528': 2, '528x432': 3 }
+      },
+      {
+        id: 'b',
+        label: '自分の内なる声や使命を追いかけたい',
+        desc: '霊性・使命・自己の真実',
+        emoji: '🌌',
+        points: { '963': 5, '528x963': 1 }
+      }
+    ]
+  }
+];
+
+/* ========================================
+   SCORING
+======================================== */
+function calcResult(answersMap) {
+  const scores = { '174':0, '432':0, '528':0, '963':0, '174x528':0, '528x963':0, '528x432':0 };
+
+  QUESTIONS.forEach(q => {
+    const choiceId = answersMap[q.id];
+    if (!choiceId) return;
+    const choice = q.choices.find(c => c.id === choiceId);
+    if (!choice) return;
+    Object.entries(choice.points).forEach(([key, pts]) => {
+      if (scores[key] !== undefined) scores[key] += pts;
+    });
+  });
+
+  // 最高スコアのキーを返す。同点はQ7・Q6の選択を優先（タイブレーカー）
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const topScore = sorted[0][1];
+  const tied = sorted.filter(e => e[1] === topScore);
+
+  if (tied.length === 1) return tied[0][0];
+
+  // タイブレーカー：Q7とQ6の答えに付いているキー優先
+  const tieKeys = tied.map(e => e[0]);
+  const q6Choice = QUESTIONS[5].choices.find(c => c.id === answersMap['q6']);
+  const q7Choice = QUESTIONS[6].choices.find(c => c.id === answersMap['q7']);
+
+  for (const choice of [q7Choice, q6Choice]) {
+    if (!choice) continue;
+    for (const key of Object.keys(choice.points)) {
+      if (tieKeys.includes(key)) return key;
+    }
+  }
+
+  return tied[0][0];
+}
+
+/* ========================================
+   APP STATE
+======================================== */
+let currentIndex = 0;
+let userAnswers = {};
+let appPhase = 'start'; // 'start' | 'questions' | 'loading' | 'result'
+
+/* ========================================
+   RENDER FUNCTIONS
+======================================== */
+function render() {
+  const content = document.getElementById('mainContent');
+  const progressWrap = document.getElementById('progressWrap');
+
+  if (appPhase === 'start') {
+    progressWrap.classList.add('hidden');
+    renderStart(content);
+  } else if (appPhase === 'questions') {
+    progressWrap.classList.remove('hidden');
+    updateProgress();
+    renderQuestion(content, currentIndex);
+  } else if (appPhase === 'loading') {
+    progressWrap.classList.add('hidden');
+    renderLoading(content);
+  } else if (appPhase === 'result') {
+    progressWrap.classList.add('hidden');
+    renderResult(content);
+  }
+}
+
+function updateProgress() {
+  const total = QUESTIONS.length;
+  const pct = Math.round((currentIndex / total) * 100);
+  document.getElementById('progressFill').style.width = Math.max(14, pct) + '%';
+  document.getElementById('stepCount').textContent = `${currentIndex + 1} / ${total}`;
+  document.getElementById('stepName').textContent = '魂の共鳴診断';
+}
+
+function renderStart(container) {
+  container.innerHTML = `
+    <div class="start-screen">
+      <span class="start-icon">🎵</span>
+      <h2>あなたの魂が求める音が<br>運命を変える</h2>
+      <p class="start-desc">
+        古代から伝わるソルフェジオ周波数。<br>
+        7種類の聖なる音のうち、今のあなたの魂が<br>
+        最も共鳴する周波数を診断します。
+      </p>
+      <div class="start-info">🎯 7問・約2分で完了</div>
+      <button class="btn-start" onclick="startQuiz()">
+        🔮 診断をはじめる
+      </button>
+    </div>
+  `;
+}
+
+function renderQuestion(container, idx) {
+  const q = QUESTIONS[idx];
+  const hasAnswer = !!userAnswers[q.id];
+  const isLast = idx === QUESTIONS.length - 1;
+
+  container.innerHTML = `
+    <div class="question-card">
+      <div class="question-number">質問 ${idx + 1} / ${QUESTIONS.length}</div>
+      <div class="question-text">${q.text}</div>
+      ${q.hint ? `<div class="question-hint">💡 ${q.hint}</div>` : ''}
+
+      <div class="choices">
+        ${q.choices.map(c => `
+          <button class="choice-btn ${userAnswers[q.id] === c.id ? 'selected' : ''}"
+                  onclick="selectChoice('${q.id}', '${c.id}')"
+                  data-value="${c.id}">
+            <div class="choice-selected-mark">✓</div>
+            <div class="choice-emoji">${c.emoji}</div>
+            <div class="choice-content">
+              <div class="choice-label">${c.label}</div>
+              <div class="choice-desc">${c.desc}</div>
+            </div>
+          </button>
+        `).join('')}
+      </div>
+
+      <div class="nav-btns">
+        ${idx > 0 ? `<button class="btn-back" onclick="goBack()">← もどる</button>` : ''}
+        <button class="btn-next ${hasAnswer ? 'active' : ''}" id="btnNext" onclick="goNext()">
+          ${isLast ? '鑑定する' : 'つぎへ'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderLoading(container) {
+  container.innerHTML = `
+    <div class="loading-screen">
+      <div class="eq-bars">
+        <div class="eq-bar" style="--dur:0.6s;height:24px;"></div>
+        <div class="eq-bar" style="--dur:0.9s;height:40px;"></div>
+        <div class="eq-bar" style="--dur:0.7s;height:16px;"></div>
+        <div class="eq-bar" style="--dur:1.0s;height:48px;"></div>
+        <div class="eq-bar" style="--dur:0.75s;height:32px;"></div>
+      </div>
+      <div class="loading-text">あなたの共鳴周波数を解析中...</div>
+      <div class="loading-subtext">
+        7つの答えから、魂の声を読み解いています<br>
+        少々お待ちください
+      </div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    appPhase = 'result';
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 3200);
+}
+
+function renderResult(container) {
+  const resultHz = calcResult(userAnswers);
+  const fd = FREQUENCY_DATA[resultHz];
+
+  container.innerHTML = `
+    <div class="result-screen">
+
+      <!-- ヘッダー -->
+      <div class="result-header">
+        <div class="result-greeting">◆ あなたの魂の共鳴周波数 ◆</div>
+        <div class="hz-display" id="hzDisplay">100Hz</div>
+        <div class="freq-name">${fd.name}</div>
+        <div class="luck-type">${fd.luckType}</div>
+      </div>
+
+      <!-- 宇宙からのメッセージ -->
+      <div class="result-card" style="animation-delay:0.1s">
+        <div class="result-section-title">
+          <span class="icon">🌌</span> この周波数があなたに届いた理由
+        </div>
+        <div class="result-message">${fd.message}</div>
+      </div>
+
+      <!-- 運気カード -->
+      <div class="result-card" style="animation-delay:0.2s">
+        <div class="result-section-title">
+          <span class="icon">${fd.emoji}</span> ${fd.luckType}
+        </div>
+        <div class="result-highlight">${fd.effect}</div>
+        <div class="catchcopy">「 ${fd.catchcopy} 」</div>
+
+        <div style="margin-top:24px;">
+          ${renderMeter('金運', fd.meters.money)}
+          ${renderMeter('愛運・縁', fd.meters.love)}
+          ${renderMeter('健康・活力', fd.meters.health)}
+          ${renderMeter('使命・魂の輝き', fd.meters.mission)}
+        </div>
+      </div>
+
+      <!-- この周波数の音楽を今すぐ聴く -->
+      <div class="result-card" style="animation-delay:0.3s">
+        <div class="result-section-title">
+          <span class="icon">🎧</span> この周波数の音楽を今すぐ聴く
+        </div>
+        <p style="color:var(--text-muted);font-size:14px;margin:0 0 20px;">
+          イヤホンで、目を閉じて深呼吸しながらお聴きください
+        </p>
+        <a href="https://youtu.be/${fd.videoId}" target="_blank" rel="noopener"
+           style="display:flex;align-items:center;justify-content:center;gap:12px;
+                  background:linear-gradient(135deg,#ff0000,#cc0000);
+                  color:#fff;text-decoration:none;border-radius:12px;
+                  padding:18px 24px;font-size:17px;font-weight:700;
+                  box-shadow:0 4px 16px rgba(255,0,0,0.4);">
+          <span style="font-size:26px;">▶</span>
+          YouTubeで ${fd.hzLabel} の音楽を聴く
+        </a>
+        <div class="how-to-item" style="margin-top:20px;">
+          <div class="how-to-icon">🌅</div>
+          <div class="how-to-text">
+            <strong>おすすめの時間帯</strong>
+            朝目覚めた後、または就寝前の静かな時間が最も効果的です。
+          </div>
+        </div>
+        <div class="how-to-item">
+          <div class="how-to-icon">🎵</div>
+          <div class="how-to-text">
+            <strong>聴き方のポイント</strong>
+            イヤホンで、目を閉じて深呼吸しながら10〜15分聴くと、より深く共鳴できます。
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="cta-section">
+        <span class="cta-icon">✨</span>
+        <h3>なぜ、この周波数が<br>あなたに届いたのか</h3>
+        <p>
+          この診断結果は偶然ではありません。<br>
+          今のあなたの魂が、この周波数を必要としているのには<br>
+          深い理由があります。<br><br>
+          さらに詳しい鑑定で、あなただけの<br>
+          開運メッセージを受け取りませんか？
+        </p>
+        <a href="#" class="btn-cta">
+          🔮 さらに詳しく鑑定を受ける
+        </a>
+        <div class="btn-cta-sub">※ CTAリンクはこちらに設定してください</div>
+        <button class="btn-retry" onclick="resetQuiz()">
+          ↩ もう一度診断する
+        </button>
+      </div>
+
+    </div>
+  `;
+
+  // Hzカウントアップアニメーション
+  animateHz(fd.hzNumeric, 'hzDisplay', fd.hzLabel);
+}
+
+function renderMeter(label, value) {
+  return `
+    <div class="fortune-meter">
+      <div class="fortune-meter-label">
+        <span>${label}</span>
+        <span style="color:var(--gold)">${value}%</span>
+      </div>
+      <div class="fortune-meter-bar">
+        <div class="fortune-meter-fill" style="width:${value}%"></div>
+      </div>
+    </div>
+  `;
+}
+
+/* ========================================
+   ANIMATIONS
+======================================== */
+function animateHz(targetHz, elementId, finalLabel) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  let current = 100;
+  const step = Math.ceil((targetHz - 100) / 40);
+  const timer = setInterval(() => {
+    current = Math.min(current + step, targetHz);
+    el.textContent = current + 'Hz';
+    if (current >= targetHz) {
+      el.textContent = finalLabel || (targetHz + 'Hz');
+      clearInterval(timer);
+    }
+  }, 50);
+}
+
+/* ========================================
+   USER ACTIONS
+======================================== */
+function startQuiz() {
+  appPhase = 'questions';
+  currentIndex = 0;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectChoice(qid, value) {
+  userAnswers[qid] = value;
+
+  // 選択ボタンのビジュアル更新
+  document.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.value === value);
+  });
+
+  // 次へボタンを活性化
+  const btnNext = document.getElementById('btnNext');
+  if (btnNext) btnNext.classList.add('active');
+}
+
+function goNext() {
+  const q = QUESTIONS[currentIndex];
+  if (!userAnswers[q.id]) return;
+
+  currentIndex++;
+
+  if (currentIndex >= QUESTIONS.length) {
+    appPhase = 'loading';
+    render();
+    return;
+  }
+
+  appPhase = 'questions';
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack() {
+  if (currentIndex > 0) {
+    currentIndex--;
+    appPhase = 'questions';
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function resetQuiz() {
+  currentIndex = 0;
+  userAnswers = {};
+  appPhase = 'start';
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ========================================
+   INIT
+======================================== */
+render();
+</script>
+</body>
+</html>
